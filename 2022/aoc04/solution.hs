@@ -30,11 +30,23 @@ solution s =
     in length [x | x <- pairs, pairsOverlap $ map (map read) x]
 
 -- Solution B --
+-- Same as above, except that now we're looking for any overlap
+-- eg. 2-4,4-6 overlaps, 2-4,5-9 does not
+--
+-- Given a pair of ranges eg. [[2,3], [4,5]]
+-- Determine if the ranges overlap in any way
+pairsOverlap' :: [[Integer]] -> Bool
+pairsOverlap' (l:r:_)
+    | head l > head r && head l > last r = False
+    | head r > head l && head r > last l = False
+    | otherwise = True
 
-solution' :: String -> Integer
-solution' s = 0
+solution' :: String -> Int
+solution' s =
+    let pairs = map (map $ splitOn (=='-')) . map (splitOn (==',')) $ lines s
+    in length [x | x <- pairs, pairsOverlap' $ map (map read) x]
 
 -- Main --
 main = do
     input <- getContents
-    print $ solution input
+    print $ solution' input
