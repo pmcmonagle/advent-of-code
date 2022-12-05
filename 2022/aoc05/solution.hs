@@ -60,9 +60,28 @@ solution ss (i:is) = solution (execute ss $ words i) is
 
 
 -- Solution B --
+-- Same as above, but now we need to move n items at a time
+
+-- Move n elements in ss from a to b
+move' :: [String] -> Int -> Int -> Int -> [String]
+move' ss n a b =
+    let (_, as)     = splitAt a ss
+        (_, bs)     = splitAt b ss
+        (val, newA) = splitAt n (reverse $ head as)
+        newB        = head bs ++ (reverse val)
+    in replace (replace ss a $ reverse newA) b newB
+
+-- Execute a single instruction, the instruction
+-- must be split into words first, eg. ["move", "1", "from", "2", "to", "1"]
+execute' :: [String] -> [String] -> [String]
+execute' ss (_:n:_:a:_:b:_) = move' ss (read n) (read a - 1) (read b - 1)
+
+solution' :: [String] -> [String] -> [String]
+solution' ss [] = ss -- identity
+solution' ss (i:is) = solution' (execute' ss $ words i) is
 
 
 -- Main --
 main = do
     input <- getContents
-    print . map last $ solution inputStacks (lines input)
+    print . map last $ solution' inputStacks (lines input)
