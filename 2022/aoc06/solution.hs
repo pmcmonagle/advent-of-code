@@ -24,23 +24,29 @@ isUnique (x:xs)
     | contains x xs = False
     | otherwise     = isUnique xs
 
--- Custom break that will split a list on
--- four items in a row being unique
-break' :: (Eq a) => [a] -> ([a], [a])
-break' l@[a,b,c,d] = (l, [])
-break' l@(a:b:c:d:xs)
-    | isUnique [a,b,c,d] = ([a,b,c,d], xs)
-    | otherwise          = (a:hs, ts)
-    where (hs, ts) = break' $ tail l
+-- Custom break that breaks at n unique values in a list
+break' :: (Eq a) => Int -> [a] -> ([a], [a])
+break' n l@(x:xs)
+    | length l <= n       = (l, [])
+    | isUnique $ take n l = (take n l, drop n l)
+    | otherwise           = (x:hs, ts)
+    where (hs, ts) = break' n xs
 
--- solution :: String -> Integer
+solution :: String -> Int
 solution s =
-    let (l, r) = break' s
+    let (l, r) = break' 4 s
     in length l
 
 -- Solution B --
+-- Same as above but with 14 distinct characters rather than 4
+
+solution' :: String -> Int
+solution' s =
+    let (l, r) = break' 14 s
+    in length l
+
 
 -- Main --
 main = do
     input <- getContents
-    print $ solution input
+    print $ solution' input
