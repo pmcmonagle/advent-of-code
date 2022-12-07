@@ -52,7 +52,6 @@ replaceChild (Dir n fs ds) n' d' = Dir n fs (hs ++ [d'] ++ (tail ts))
 parse :: [String] -> Directory -> [Directory] -> Directory
 parse [] cd [] = cd
 parse [] cd path = parse ["$ cd .."] cd path
--- parse [] cd path = parse ["$ cd .."] cd path
 parse (x:xs) cd path
     | x == "$ cd /"  = parse xs cd []
     | x == "$ ls"    = parse xs cd path
@@ -68,16 +67,25 @@ parse (x:xs) cd path
 -- For the first solution, find all directories with a size < 100,000
 -- and calculate the sums of their sizes
 
+-- Get cumulative file size for a directory and all subdirectories
+getFileSize :: Directory -> Int
+getFileSize (Root [] []) = 0
+getFileSize (Root fs ds) = sum fs + sum (map getFileSize ds)
+getFileSize (Dir _ [] []) = 0
+getFileSize (Dir _ fs ds) = sum fs + sum (map getFileSize ds)
+
+getDirSizes :: Directory -> [Int]
+getDirSizes r@(Root _ ds) = (getFileSize r):(concat $ map getDirSizes ds)
+getDirSizes d@(Dir _ _ ds) = (getFileSize d):(concat $ map getDirSizes ds)
+
+maxFileSize = 100000
+
 solution :: Directory -> Int
-solution (Root [] []) = 0
-solution (Root fs ds) = sum [f | f <- fs, f < 100000] + sum (map solution ds)
-solution (Dir _ [] []) = 0
-solution (Dir _ fs ds) = sum [f | f <- fs, f < 100000] + (sum (map solution ds) * 2)
+solution d = sum [s | s <- getDirSizes d, s < maxFileSize]
 
 -- Solution B --
 
 -- Main --
 main = do
     input <- getContents
-    print $ parse (lines input) (Root [] []) []
     print . solution $ parse (lines input) (Root [] []) []
