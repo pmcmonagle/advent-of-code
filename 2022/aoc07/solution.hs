@@ -84,8 +84,24 @@ solution :: Directory -> Int
 solution d = sum [s | s <- getDirSizes d, s < maxFileSize]
 
 -- Solution B --
+-- Determine the size of the smallest directory we can delete
+-- to free up 30000000 space
+
+-- Sort a list, smallest to biggest!
+quicksort :: (Ord a) => [a] -> [a]
+quicksort [] = []
+quicksort (x:xs) =
+  let smaller = quicksort [a | a <- xs, a <= x]
+      bigger  = quicksort [a | a <- xs, a > x]
+  in smaller ++ [x] ++ bigger
+
+maxDiskSpace  = 70000000
+reqDiskSpace  = 30000000
+targetSpace r = reqDiskSpace - (maxDiskSpace - getFileSize r)
+
+solution' d = head $ quicksort [s | s <- getDirSizes d, s >= targetSpace d]
 
 -- Main --
 main = do
     input <- getContents
-    print . solution $ parse (lines input) (Root [] []) []
+    print . solution' $ parse (lines input) (Root [] []) []
