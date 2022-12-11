@@ -1,5 +1,6 @@
 import Data.List
 import Data.Int
+import Control.Monad.State.Lazy
 
 -- From Data.List.Split
 -- Split a list on some predicate
@@ -70,14 +71,16 @@ inspect ms n
         val = (perf o $ head is)-- `div` 3
 
 -- This is dirty and I bet it wouldn't be if I understood monads
-doRound ms n
+doRound n ms
     | n >= (length ms) = ms
-    | otherwise        = doRound (inspect ms n) (n+1)
+    | otherwise        = doRound (n+1) (inspect ms n)
 
--- Same as above, but counting down from n
-doRounds ms n
-    | n == 0    = ms
-    | otherwise = doRounds (doRound ms 0) (n-1)
+doRound' :: State [Monkey] ()
+doRound' = do
+    ms <- get
+    put (doRound 0 ms)
+    return ()
+
 
 -- Get the inspections value from a monkey
 getInspections (Mon is o t c) = c
@@ -86,10 +89,10 @@ getInspections (Mon is o t c) = c
 -- Run 20 rounds of monkey business
 -- Then find the inspection counts and multiply the two highest together
 
-solution ms =
-    let result = doRounds ms 20
-        is = map getInspections result
-    in product $ take 2 (reverse $ sort is)
+-- solution ms =
+--     let result = doRounds ms 20
+--         is = map getInspections result
+--     in product $ take 2 (reverse $ sort is)
 
 -- Solution B --
 -- Comment out the `div` 3 in inspect, and then 
@@ -97,12 +100,16 @@ solution ms =
 -- Using Int doesn't have enough precision, but Integer is SO slow ;_;
 
 solution' ms =
-    let result = doRounds ms 10000
-        is = map getInspections result
+    let is = map getInspections ms -- result
     in product $ take 2 (reverse $ sort is)
-
 
 -- Main --
 main = do
     input <- getContents
-    print . solution' . parse $ lines input
+    let
+            initial = parse (lines input)
+            rounds = replicate 1000 doRound'
+            chained = sequence rounds
+            result = execState chained initial
+        in
+            print $ solution' result
