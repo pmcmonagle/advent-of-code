@@ -30,6 +30,23 @@ score (_, ws, ys) =
 solution_a :: String -> Int
 solution_a input = sum $ map (score . parseCard) (lines input)
 
+-- Like exploding die, each "win" copies a card below it, which can also explode
+explode :: [Card] -> [Card] -> [Card]
+explode cards [] = []
+explode cards (c@(id, ws, ys):cs) =
+    let valid n = elem n ws
+        count   = length $ filter valid ys
+        remains = drop id cards
+    in case count of
+        0 -> c : (explode cards cs)
+        _ -> c : (explode cards cs) ++ (explode cards $ take count remains)
+
+solution_b :: String -> Int
+solution_b input =
+    let cards = map parseCard (lines input)
+    in length $ explode cards cards
+
 main = do
     input <- getContents
     print $ solution_a input
+    print $ solution_b input
