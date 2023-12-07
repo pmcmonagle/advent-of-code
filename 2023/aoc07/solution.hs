@@ -45,6 +45,55 @@ solution_a input =
         scores = map snd sorted
     in sum $ zipWith (*) [1..] scores
 
+-- Part 2 turns J in wildcards, so we probably need an extra grouping step
+-- where we combine The J's with the biggest group
+applyWildcard :: [String] -> [String]
+applyWildcard []  = []
+applyWildcard [x] = [x]
+applyWildcard xs = if all ((/='J') . head) xs then xs else
+    let js     = head $ dropWhile ((/='J') . head) xs
+        (h:ts) = filter ((/='J') . head) xs
+    in (h ++ js):ts
+
+-- J's, wild, are now scored as 1 on their own
+letterScore' :: Char -> Int
+letterScore' c
+    | c == 'T'  = 10
+    | c == 'J'  = 1
+    | c == 'Q'  = 12
+    | c == 'K'  = 13
+    | c == 'A'  = 14
+    | otherwise = digitToInt c
+
+-- Convert the string into a base score first
+-- The maximum score would be AAAAA -> 1414141414
+baseScore' :: String -> Int
+baseScore' (a:b:c:d:e:_) =
+    (letterScore' a * 100000000)
+    + (letterScore' b * 1000000)
+    + (letterScore' c * 10000)
+    + (letterScore' d * 100)
+    + (letterScore' e)
+
+typeScore' :: String -> Int
+typeScore' hand
+    | length g == 5 = 6
+    | length g == 4 = 5
+    | length g == 3 = if (length $ head gs) == 2 then 4 else 3
+    | length g == 2 = if (length $ head gs) == 2 then 2 else 1
+    | otherwise = 0
+    where (g:gs) = applyWildcard . reverse $ sortOn length ((group . sort) hand)
+
+score' :: Hand -> Int
+score' (h, _) = (typeScore' h) * 10000000000 + (baseScore' h)
+
+solution_b :: String -> Int
+solution_b input =
+    let sorted = sortOn score' (parse input)
+        scores = map snd sorted
+    in sum $ zipWith (*) [1..] scores
+
 main = do
     input <- getContents
     print $ solution_a input
+    print $ solution_b input
